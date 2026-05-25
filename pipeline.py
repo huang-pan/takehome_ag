@@ -59,7 +59,7 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--output",
-        default="docs",
+        default="output",
         help="Directory to write HTML output",
     )
     p.add_argument(
