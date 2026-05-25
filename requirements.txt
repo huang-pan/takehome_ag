@@ -1,0 +1,15 @@
+# Legal Opinion Rendering Pipeline — Python dependencies
+# Python 3.10+
+
+# HTML parsing (lenient; handles both XML-flavored and div/center-flavored CourtListener output)
+beautifulsoup4>=4.12
+lxml>=5.0          # lxml-xml parser for strict XML opinions; lxml.html for div/center
+
+# Unicode / encoding repair
+ftfy>=6.1
+
+# HTML templating (index + opinion pages)
+Jinja2>=3.1
+
+# Testing
+pytest>=7.4
