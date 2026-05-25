@@ -89,7 +89,7 @@ _TEMPLATE_STR = r"""<!DOCTYPE html>
 
   <!-- ── Site header ── -->
   <header class="site-header" role="banner">
-    <div class="logo">Our<span>Firm</span> Legal</div>
+    <div class="logo"><a href="index.html">Our<span>Firm</span> Legal</a></div>
     <nav class="header-meta" aria-label="breadcrumb">
       <a href="index.html">All Opinions</a>
       &rsaquo; Opinion {{ ctx.opinion_id }}
@@ -243,11 +243,31 @@ _TEMPLATE_STR = r"""<!DOCTYPE html>
 
 # ── Section extraction ────────────────────────────────────────────────
 
-# Headings that indicate a new section starting
+# Headings that indicate a new section starting (used for TOC detection legacy)
 _SECTION_HEADING_RE = re.compile(
     r"^(I{1,4}\.?|II{1,3}\.?|IV\.?|V{1,3}\.?|[A-Z]{1,4}\.)\s*$|"
     r"^(DISCUSSION|ANALYSIS|BACKGROUND|CONCLUSION|HELD|AFFIRM|REVERS|REMAND"
     r"|DISSENT|CONCUR|MAJORITY|OPINION|ORDER|PER CURIAM|NOTES?)\b",
+    re.IGNORECASE,
+)
+
+# Regex to detect a <p> that is actually a section heading and should be
+# promoted to <h2> or <h3> in the rendered output.
+# Group 1 = top-level Roman / keyword  →  h2
+# Group 2 = sub-section letter         →  h3
+_H2_RE = re.compile(
+    # Roman-numeral sections optionally followed by a title (e.g. "I. BACKGROUND")
+    r"^(?:\*\d+\s*)?"
+    r"((?:I{1,3}|IV|VI{0,3}|IX|X{1,3})\.?(?:\s+.{0,70})?)$"
+    r"|"
+    # Bare structural keywords — must be the WHOLE paragraph (plus optional punctuation)
+    r"^(DISCUSSION|ANALYSIS|BACKGROUND|CONCLUSION|INTRODUCTION"
+    r"|STANDARD\s+OF\s+REVIEW|HELD|OPINION|ORDER|AFFIRMED|REVERSED"
+    r"|REMANDED|PER\s+CURIAM|NOTES?)[.\s]*$",
+    re.IGNORECASE,
+)
+_H3_RE = re.compile(
+    r"^(?:\*\d+\s*)?([A-Z]\..{0,60})$",
     re.IGNORECASE,
 )
 
@@ -509,12 +529,27 @@ def _render_inline_tag(tag: Tag) -> str:
 
 
 def _render_paragraph(p_tag: Tag, soup: BeautifulSoup) -> str:
-    """Render a <p> tag as an HTML paragraph."""
+    """Render a <p> tag, upgrading section-heading paragraphs to <h2>/<h3>."""
     inner = _render_inline(p_tag)
     inner_stripped = inner.strip()
     if not inner_stripped:
         return ""
-    # Skip very short repeated fragments (already handled in transformer but belt-and-braces)
+
+    # Plain text of the paragraph (strip star-page markers for matching)
+    plain = p_tag.get_text(strip=True)
+    plain_clean = re.sub(r"^\*\d+\s*", "", plain).strip()
+
+    # Only promote short paragraphs (section headings are never long prose)
+    if len(plain_clean) <= 80:
+        # Reuse the source paragraph's id as the anchor when available
+        src_id = p_tag.get("id", "")
+        if _H2_RE.match(plain_clean):
+            anchor = _slugify(plain_clean) if not src_id else src_id
+            return f'<h2 id="{_escape(anchor)}" class="opinion-section-heading">{inner_stripped}</h2>'
+        if _H3_RE.match(plain_clean):
+            anchor = _slugify(plain_clean) if not src_id else src_id
+            return f'<h3 id="{_escape(anchor)}" class="opinion-section-heading">{inner_stripped}</h3>'
+
     return f"<p>{inner}</p>"
 
 
@@ -629,25 +664,36 @@ _TOC_TAG_LEVELS = {"h1": 1, "h2": 2, "h3": 3, "h4": 3}
 
 # Headings that are too generic to be useful TOC entries
 _TOC_SKIP_RE = re.compile(
-    r"^(majority|dissent|concurrence|per curiam|opinion|counsel)$",
+    r"^(majority|dissent|concurrence|per curiam|opinion|counsel"
+    r"|affirmed|reversed|remanded)$",
     re.IGNORECASE,
 )
 
 
 def build_toc(sections: list[OpinionSection]) -> list[TocEntry]:
-    """Build TOC from rendered section HTML."""
+    """Build TOC from rendered section HTML, including A/B/C sub-sections.
+
+    Entries are collected in document order.  h2-level headings (Roman numeral
+    sections, structural keywords) appear at level 2; h3-level headings
+    (A. B. C. sub-sections) appear indented at level 3.
+    """
+    _STAR_PREFIX = re.compile(r"^\*\d+\s*")
     entries: list[TocEntry] = []
+
     for sec in sections:
         soup = BeautifulSoup(sec.body_html, "html.parser")
         for tag in soup.find_all(["h1", "h2", "h3", "h4"]):
             text = tag.get_text(strip=True)
+            # Strip any leading star-page marker (e.g. "*157I." → "I.")
+            text = _STAR_PREFIX.sub("", text).strip()
             if not text or _TOC_SKIP_RE.match(text):
                 continue
             anchor = tag.get("id") or _slugify(text)
             level = _TOC_TAG_LEVELS.get(tag.name, 2)
             entries.append(TocEntry(level=level, text=text[:60], anchor_id=anchor))
-            if len(entries) >= 30:
+            if len(entries) >= 40:
                 break
+
     return entries
 
 

@@ -25,7 +25,7 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
 <div style="display:flex; flex-direction:column; min-height:100vh;">
 
   <header class="site-header" role="banner">
-    <div class="logo">Our<span>Firm</span> Legal</div>
+    <div class="logo"><a href="index.html">Our<span>Firm</span> Legal</a></div>
     <nav class="header-meta" aria-label="breadcrumb">Federal Appellate Opinions — 2010</nav>
   </header>
 
@@ -67,11 +67,11 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
             <th>ID</th>
             <th>Case Name</th>
             <th>Court</th>
-            <th>Date Filed</th>
+            <th style="white-space:nowrap">Date Filed</th>
             <th>Docket</th>
             <th>Status</th>
             <th>Pages</th>
-            <th>Link</th>
+            <th style="width:6rem;white-space:nowrap">Link</th>
           </tr>
         </thead>
         <tbody>
@@ -80,7 +80,7 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
             <td>{{ row.opinion_id }}</td>
             <td class="case-name">{{ row.case_name }}</td>
             <td>{{ row.court_id | upper }}</td>
-            <td>{{ row.date_filed }}</td>
+            <td style="white-space:nowrap">{{ row.date_filed }}</td>
             <td style="font-family:var(--font-mono);font-size:0.75rem">{{ row.docket_number }}</td>
             <td>
               {% if row.precedential_status|lower == 'published' %}
@@ -90,7 +90,7 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
               {% endif %}
             </td>
             <td>{{ row.page_count }}</td>
-            <td>
+            <td style="white-space:nowrap">
               {% if row.ok %}
               <a href="{{ row.opinion_id }}.html" class="op-link">
                 View &rarr;
