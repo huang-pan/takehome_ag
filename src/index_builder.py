@@ -25,7 +25,7 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
 <div style="display:flex; flex-direction:column; min-height:100vh;">
 
   <header class="site-header" role="banner">
-    <div class="logo"><a href="index.html">Our<span>Firm</span> Legal</a></div>
+    <div class="logo"><a href="index.html" data-same-tab>Our<span>Firm</span> Legal</a></div>
     <nav class="header-meta" aria-label="breadcrumb">Federal Appellate Opinions — 2010</nav>
   </header>
 
@@ -92,7 +92,7 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
             <td>{{ row.page_count }}</td>
             <td style="white-space:nowrap">
               {% if row.ok %}
-              <a href="{{ row.opinion_id }}.html" class="op-link">
+              <a href="{{ row.opinion_id }}.html" class="op-link" data-same-tab>
                 View &rarr;
               </a>
               {% else %}
@@ -131,6 +131,15 @@ _INDEX_TEMPLATE = r"""<!DOCTYPE html>
   }
 
   input.addEventListener('input', filter);
+
+  // Open all non-anchor, non-nav links in a new tab
+  document.querySelectorAll('a[href]').forEach(function(a){
+    var h = a.getAttribute('href');
+    if(h && !h.startsWith('#') && !a.hasAttribute('data-same-tab')){
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener noreferrer');
+    }
+  });
 })();
 </script>
 

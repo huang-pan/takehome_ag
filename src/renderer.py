@@ -89,9 +89,9 @@ _TEMPLATE_STR = r"""<!DOCTYPE html>
 
   <!-- ── Site header ── -->
   <header class="site-header" role="banner">
-    <div class="logo"><a href="index.html">Our<span>Firm</span> Legal</a></div>
+    <div class="logo"><a href="index.html" data-same-tab>Our<span>Firm</span> Legal</a></div>
     <nav class="header-meta" aria-label="breadcrumb">
-      <a href="index.html">All Opinions</a>
+      <a href="index.html" data-same-tab>All Opinions</a>
       &rsaquo; Opinion {{ ctx.opinion_id }}
     </nav>
   </header>
@@ -233,6 +233,14 @@ _TEMPLATE_STR = r"""<!DOCTYPE html>
 
   document.querySelectorAll('[id^="section-"], [id^="star-"]').forEach(function(el){
     observer.observe(el);
+  });
+  // Open all non-anchor, non-nav links in a new tab
+  document.querySelectorAll('a[href]').forEach(function(a){
+    var h = a.getAttribute('href');
+    if(h && !h.startsWith('#') && !a.hasAttribute('data-same-tab')){
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener noreferrer');
+    }
   });
 })();
 </script>
