@@ -9,7 +9,7 @@ A Python 3.10+ pipeline that ingests 60 federal appellate opinions from a CourtL
 ```bash
 pip install -r requirements.txt
 python pipeline.py
-# Outputs to output/ (61 files: index.html + one per opinion)
+# Outputs to docs/ (61 files: index.html + one per opinion)
 ```
 
 Run tests:
@@ -160,7 +160,7 @@ src/
   transformer.py     HTML in-place transforms: star-pagination, footnotes, citations, whitespace
   renderer.py        Section extraction, TOC generation, Jinja2 template rendering
   index_builder.py   Builds index.html from a list of IndexRow metadata objects
-output/
+docs/
   index.html
   <opinion_id>.html × 60
   assets/style.css

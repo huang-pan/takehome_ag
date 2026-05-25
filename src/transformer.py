@@ -178,14 +178,36 @@ def _remove_html_running_headers(soup: BeautifulSoup, fmt: HtmlFormat) -> None:
     """
     Remove <p> blocks that appear verbatim multiple times across the document.
     These are typically running headers/footers embedded in the paragraph stream.
+
+    IMPORTANT: paragraphs inside <div class="footnote"> are excluded from both
+    the candidate count and the removal sweep.  The same citation text often
+    appears verbatim in both the opinion body and a footnote (e.g. "Smith v.
+    Jones, 123 F.3d 456 (2010)."), which would otherwise be misidentified as a
+    repeated running header and stripped from the footnote.
     """
     if fmt != HtmlFormat.XML_OPINION:
         return  # div/center format doesn't have this issue
+
+    def _inside_footnote(tag: Tag) -> bool:
+        """Return True if *tag* is a descendant of a footnote div.
+
+        Works with both lxml-xml (class is a str) and html.parser (class is a list).
+        """
+        for ancestor in tag.parents:
+            if ancestor.name == "div":
+                cls = ancestor.get("class") or ""
+                # cls is a list with html.parser, a str with lxml-xml
+                cls_str = " ".join(cls) if isinstance(cls, list) else str(cls)
+                if "footnote" in cls_str.split():
+                    return True
+        return False
 
     paragraphs = soup.find_all("p")
     text_counter: Counter[str] = Counter()
 
     for p in paragraphs:
+        if _inside_footnote(p):
+            continue  # don't count footnote paragraphs as header candidates
         text = p.get_text(strip=True)
         if 4 <= len(text) <= _MAX_HEADER_LEN:
             text_counter[text] += 1
@@ -196,6 +218,8 @@ def _remove_html_running_headers(soup: BeautifulSoup, fmt: HtmlFormat) -> None:
 
     removed = 0
     for p in paragraphs:
+        if _inside_footnote(p):
+            continue  # never remove footnote paragraphs
         if p.get_text(strip=True) in headers:
             p.decompose()
             removed += 1
