@@ -2,6 +2,8 @@
 
 A Python 3.10+ pipeline that ingests 60 federal appellate opinions from a CourtListener CSV export and produces clean, readable, self-contained HTML for each opinion — plus a searchable index.
 
+Browse the results: **[output/index.html](https://huang-pan.github.io/takehome_ag/output/index.html)**
+
 ---
 
 ## Quick Start
@@ -11,8 +13,6 @@ pip install -r requirements.txt
 python pipeline.py
 # Outputs to output/ (61 files: index.html + one per opinion)
 ```
-
-Browse the results: **[output/index.html](output/index.html)**
 
 Run tests:
 ```bash
