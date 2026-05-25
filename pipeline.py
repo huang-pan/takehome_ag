@@ -8,7 +8,7 @@ Usage:
     python pipeline.py [--csv PATH] [--output DIR] [--log-level LEVEL]
 
 Reads opinion_bucket_export_20_each.csv and writes:
-  output/
+  docs/
     index.html          — searchable listing of all 60 opinions
     <opinion_id>.html   — one rendered file per opinion
     assets/style.css    — stylesheet (must already exist in output/assets/)
