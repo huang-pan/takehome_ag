@@ -154,6 +154,84 @@ No CDN-hosted JavaScript frameworks are used. The back-to-top button and TOC hig
 
 ## Architecture
 
+### Code flow
+
+```mermaid
+flowchart TD
+    CSV[("`**opinion_bucket_export_20_each.csv**`")]
+    CLI["`**pipeline.py**
+main()`"]
+    PR["`**pipeline.py**
+process_row()`"]
+
+    subgraph parser ["src/parser.py"]
+        DF["`**parser.py**
+detect_format()`"]
+        PH["`**parser.py**
+parse_html()`"]
+    end
+
+    subgraph transformer ["src/transformer.py"]
+        TR["`**transformer.py**
+transform()
+· remove noise tags
+· fix encoding · fix citation URLs
+· normalise star-pagination
+· fix footnote links
+· remove running headers
+· normalise whitespace`"]
+    end
+
+    subgraph renderer ["src/renderer.py"]
+        EX{"`**renderer.py**
+format?`"}
+        EX_XML["`**renderer.py**
+_extract_sections_xml()`"]
+        EX_DIV["`**renderer.py**
+_extract_sections_div()`"]
+        TOC["`**renderer.py**
+build_toc()`"]
+        REN["`**renderer.py**
+render_opinion()
+(Jinja2 template)`"]
+    end
+
+    subgraph cleaner ["src/cleaner.py  ── fallback path only"]
+        CL["`**cleaner.py**
+clean_plain_text()
+· strip numbered lines
+· remove running headers
+· collapse whitespace`"]
+    end
+
+    subgraph index_builder ["src/index_builder.py"]
+        BI["`**index_builder.py**
+build_index()`"]
+    end
+
+    OUT_HTML[/"`output/&lt;id&gt;.html`"/]
+    OUT_IDX[/"`output/index.html`"/]
+
+    CSV --> CLI
+    CLI -->|"for each row"| PR
+    PR --> DF
+    DF -->|"XML_OPINION"| PH
+    DF -->|"DIV_CENTER"| PH
+    DF -->|"EMPTY"| CL
+    CL -->|"minimal HTML"| PH
+    PH --> TR
+    TR --> EX
+    EX -->|"XML_OPINION"| EX_XML
+    EX -->|"DIV_CENTER"| EX_DIV
+    EX_XML --> TOC
+    EX_DIV --> TOC
+    EX_XML -->|"empty → fallback"| CL
+    TOC --> REN
+    REN --> OUT_HTML
+    CLI -->|"all IndexRows"| BI
+    BI --> OUT_IDX
+```
+
 ```
 pipeline.py          Entry point — reads CSV, iterates rows, calls processor, handles errors
 src/
