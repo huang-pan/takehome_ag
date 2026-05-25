@@ -225,8 +225,6 @@ build_index()`"]
     EX -->|"DIV_CENTER"| EX_DIV
     EX_XML --> TOC
     EX_DIV --> TOC
-    CL -->|"plain-text fallback"| TOC
-    EX_XML -->|"empty → fallback"| CL
     TOC --> REN
     REN --> OUT_HTML
     CLI -->|"all IndexRows"| BI
