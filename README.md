@@ -1,6 +1,6 @@
 # Legal Opinion Cleanup & Rendering Pipeline
 
-A Python 3.10+ pipeline that ingests 60 federal appellate opinions from a CourtListener CSV export and produces clean, readable, self-contained HTML for each opinion — plus a searchable index. Created using Google Antigravity 2.
+A Python 3.10+ pipeline that ingests 60 federal appellate opinions from a CourtListener CSV export and produces clean, readable, self-contained HTML for each opinion — plus a searchable index. Created using Google Antigravity 2 AI code generation.
 
 Browse the results: **[output/index.html](https://huang-pan.github.io/takehome_ag/output/index.html)**
 
